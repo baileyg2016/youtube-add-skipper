@@ -1,8 +1,11 @@
 import argparse
 import logging
 import os
+import time
 
+import numpy as np
 import openai
+import whisper
 import yt_dlp
 from pydub import AudioSegment
 
@@ -52,6 +55,34 @@ def transcribe_audio_chunks(chunks):
         temp_filename = f"temp_chunk_{i}.mp3"
         chunk.export(temp_filename, format="mp3")
 
+        print(f"Transcribing: {temp_filename}...")
+        start_time = time.time()
+        model = whisper.load_model("medium")
+        result = model.transcribe(temp_filename) # openai.Audio.transcribe("whisper-1", open(temp_filename, "rb"))
+        print("result", result)
+        transcript_segments = []
+        for seg in result['segments']:
+            ts = np.round(seg['start'], 1)
+            transcript_segments.append(f"&t={ts}s\t{ts}\t{seg['text']}")
+
+        transcripts.append("\n".join(transcript_segments))
+        end_time = time.time()
+        time_diff = end_time - start_time
+
+        os.remove(temp_filename)  # Remove the temporary chunk file
+
+        print(f"Chunk {i} transcribed. Time taken: {time_diff:.2f} seconds")
+
+    return "\n".join(transcripts)
+
+
+def transcribe_audio_chunks_1(chunks):
+    transcripts = []
+
+    for i, chunk in enumerate(chunks):
+        temp_filename = f"temp_chunk_{i}.mp3"
+        chunk.export(temp_filename, format="mp3")
+
         transcript = transcribe_audio(temp_filename)
         transcripts.append(transcript)
 
@@ -77,7 +108,7 @@ def save_transcript(transcript, file_path):
 # Delete the audio files
 def cleanup():
     for file in os.listdir():
-        if file.startswith("*.mp3"):
+        if file.endswith(".mp3"):
             os.remove(file)
 
 def main():
@@ -93,24 +124,28 @@ def main():
 
     video_url = args.video_url
     output_file = "output_audio.mp3" # args.output_file if args.output_file.endswith(".mp3") else f"{args.output_file}.mp3"
+    try:
+        # Download audio from YouTube video
+        # OpenAI really needs to let you just make an API call with a URL
+        download_audio(video_url, output_file)
 
-    download_audio(video_url, output_file)
-    max_duration_seconds = 2500  # Set the maximum duration in seconds
-    # truncate_audio(output_file)
-    # Split audio into chunks
-    chunks = split_audio(output_file)
+        # Split audio into chunks
+        chunks = split_audio(output_file)
 
-    # Transcribe audio chunks
-    transcript = transcribe_audio_chunks(chunks)
+        # Transcribe audio chunks
+        transcript = transcribe_audio_chunks(chunks)
 
-    # Save transcript
-    transcript_file = "transcript.txt"
-    save_transcript(transcript, transcript_file)
+        # Save transcript
+        transcript_file = "transcript.txt"
+        save_transcript(transcript, transcript_file)
 
-    # Delete the audio files
-    cleanup()
-
-    print(f"\n\nTranscript saved to {transcript_file}")
+        print(f"\n\nTranscript saved to {transcript_file}")
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        # Delete the audio files no matter what
+        cleanup()
+        
 
 
 if __name__ == '__main__':
