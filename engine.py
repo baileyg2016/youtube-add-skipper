@@ -1,8 +1,10 @@
-from pydub import AudioSegment
-import yt_dlp
 import argparse
 import logging
+import os
+
 import openai
+import yt_dlp
+from pydub import AudioSegment
 
 
 def download_audio(video_url, output_file):
@@ -25,12 +27,20 @@ def download_audio(video_url, output_file):
         logging.error(f"DownloadError: {e}")
         print('Got the download error but we worked anyway')
 
-def split_audio(file_path, chunk_size_seconds=120):
+def split_audio(file_path, max_file_size_mb=25, default_chunk_seconds=120):
     audio = AudioSegment.from_file(file_path)
-    chunks = []
+    file_size = os.path.getsize(file_path)  # Get the file size in bytes
 
-    for i in range(0, len(audio), chunk_size_seconds * 1000):
-        chunk = audio[i:i + chunk_size_seconds * 1000]
+    # If the file size is larger than max_file_size_mb, calculate new chunk duration
+    if file_size > max_file_size_mb * 1024 * 1024:
+        bitrate = audio.frame_rate * audio.sample_width * audio.channels  # Calculate bitrate in bps
+        chunk_size_seconds = (max_file_size_mb * 1024 * 1024 * 8) / bitrate  # Calculate chunk duration in seconds
+    else:
+        chunk_size_seconds = default_chunk_seconds
+
+    chunks = []
+    for i in range(0, len(audio), int(chunk_size_seconds * 1000)):
+        chunk = audio[i:i + int(chunk_size_seconds * 1000)]
         chunks.append(chunk)
 
     return chunks
