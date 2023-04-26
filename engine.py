@@ -88,11 +88,11 @@ def main():
 
     parser = argparse.ArgumentParser(description='Process YouTube URL and output file')
     parser.add_argument('video_url', type=str, help='YouTube video URL')
-    parser.add_argument('output_file', type=str, help='Output file name with extension (e.g. output.m4a)')
+    # parser.add_argument('output_file', type=str, help='Output file name with extension (e.g. output.m4a)') # this should be needed
     args = parser.parse_args()
 
     video_url = args.video_url
-    output_file = args.output_file if args.output_file.endswith(".mp3") else f"{args.output_file}.mp3"
+    output_file = "output_audio.mp3" # args.output_file if args.output_file.endswith(".mp3") else f"{args.output_file}.mp3"
 
     download_audio(video_url, output_file)
     max_duration_seconds = 2500  # Set the maximum duration in seconds
