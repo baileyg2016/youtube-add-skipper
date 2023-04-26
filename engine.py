@@ -74,6 +74,12 @@ def save_transcript(transcript, file_path):
     with open(file_path, "w") as f:
         f.write(transcript)
 
+# Delete the audio files
+def cleanup():
+    for file in os.listdir():
+        if file.startswith("*.mp3"):
+            os.remove(file)
+
 def main():
     # Set up logger
     logging.basicConfig(filename='download_audio.log',
@@ -101,8 +107,10 @@ def main():
     transcript_file = "transcript.txt"
     save_transcript(transcript, transcript_file)
 
-    print(f"Transcript saved to {transcript_file}")
+    # Delete the audio files
+    cleanup()
 
+    print(f"\n\nTranscript saved to {transcript_file}")
 
 
 if __name__ == '__main__':
