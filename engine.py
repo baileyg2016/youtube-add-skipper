@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import time
+import warnings
 
 import numpy as np
 import openai
@@ -12,6 +13,17 @@ from langchain.chat_models import ChatOpenAI
 from langchain.llms import OpenAI
 
 DEBUG = False
+
+def deprecated(func):
+    def wrapper(*args, **kwargs):
+        warnings.warn(
+            f"{func.__name__} is deprecated and will be removed in future versions.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        return func(*args, **kwargs)
+    return wrapper
+
 
 def download_audio(video_url, output_file):
     print(f"Downloading audio from {video_url} to {output_file}...")
@@ -51,6 +63,16 @@ def split_audio(file_path, max_file_size_mb=25, default_chunk_seconds=120):
 
     return chunks
 
+def split_audio_seconds(file_path, chunk_size_seconds=10):
+    audio = AudioSegment.from_file(file_path)
+    chunks = []
+
+    for i in range(0, len(audio), chunk_size_seconds * 1000):
+        chunk = audio[i:i + chunk_size_seconds * 1000]
+        chunks.append(chunk)
+
+    return chunks
+
 def transcribe_audio_chunks(chunks):
     transcripts = []
 
@@ -58,15 +80,10 @@ def transcribe_audio_chunks(chunks):
         temp_filename = f"temp_chunk_{i}.mp3"
         chunk.export(temp_filename, format="mp3")
 
-        print(f"Transcribing: {temp_filename}...")
-        start_time = time.time()
-        model = whisper.load_model("medium")
-        result = openai.Audio.transcribe("whisper-1", open(temp_filename, "rb"))
+        print(f"\nTranscribing: {temp_filename}...")
+        start_time = time.time(_
 
-        transcript_segments = []
-        # for seg in result['segments']:
-        #     ts = np.round(seg['start'], 1)
-        #     transcript_segments.append(f"&t={ts}s\t{ts}\t{seg['text']}")
+        result = openai.Audio.transcribe("whisper-1", open(temp_filename, "rb"))
 
         transcripts.append(result["text"])# ("\n".join(transcript_segments))
         end_time = time.time()
@@ -78,7 +95,7 @@ def transcribe_audio_chunks(chunks):
     
     return "\n".join(transcripts)
 
-
+@deprecated
 def transcribe_audio_chunks_1(chunks):
     transcripts = []
 
@@ -91,6 +108,7 @@ def transcribe_audio_chunks_1(chunks):
 
     return "\n".join(transcripts)
 
+@deprecated
 def truncate_audio(file_path, max_duration_seconds=2500):
     audio = AudioSegment.from_file(file_path, keep=True)
     print(max_duration_seconds)
