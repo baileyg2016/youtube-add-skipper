@@ -9,6 +9,10 @@ import openai
 import whisper
 import yt_dlp
 from pydub import AudioSegment
+from langchain.chat_models import ChatOpenAI
+from langchain.llms import OpenAI
+
+DEBUG = False
 
 def deprecated(func):
     def wrapper(*args, **kwargs):
@@ -19,6 +23,7 @@ def deprecated(func):
         )
         return func(*args, **kwargs)
     return wrapper
+
 
 def download_audio(video_url, output_file):
     print(f"Downloading audio from {video_url} to {output_file}...")
@@ -76,22 +81,18 @@ def transcribe_audio_chunks(chunks):
         chunk.export(temp_filename, format="mp3")
 
         print(f"\nTranscribing: {temp_filename}...")
-        start_time = time.time()
-        result = openai.Audio.transcribe("whisper-1", open(temp_filename, "rb"))
-        
-        # transcript_segments = []
-        # for seg in result['segments']:
-        #     ts = np.round(seg['start'], 1)
-        #     transcript_segments.append(f"&t={ts}s\t{ts}\t{seg['text']}")
+        start_time = time.time(_
 
-        transcripts.append("\n".join(result))
+        result = openai.Audio.transcribe("whisper-1", open(temp_filename, "rb"))
+
+        transcripts.append(result["text"])# ("\n".join(transcript_segments))
         end_time = time.time()
         time_diff = end_time - start_time
 
         os.remove(temp_filename)  # Remove the temporary chunk file
 
         print(f"Chunk {i} transcribed. Time taken: {time_diff:.2f} seconds")
-
+    
     return "\n".join(transcripts)
 
 @deprecated
@@ -125,6 +126,25 @@ def save_transcript(transcript, file_path):
     with open(file_path, "w") as f:
         f.write(transcript)
 
+def determine_ads(transcript):
+    prompt = "I am going to give you a transcript of a youtube video and I want you to tell me if there are any ads in it. \n\nTranscript: " + transcript + "\n\nAre there any ads in this video? Only respond with yes or no. Nothing else."
+    split = 5
+    part_length = len(prompt) // split
+    
+    prompts = [prompt[i * part_length:(i + 1) * part_length] for i in range(split)]
+    # model = openai.ChatCompletion.create(model="gpt-3.5-turbo")
+    llm = OpenAI(model_name="gpt-3.5-turbo", temperature=0)# ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
+    print(len(prompt.split(' ')))
+    responses = []
+    for prompt in prompts:
+        r = llm(prompt)
+        print("resp:", r)
+        responses.append(r)
+
+    print('here is the response')
+    print(responses)
+
+
 # Delete the audio files
 def cleanup():
     for file in os.listdir():
@@ -149,15 +169,24 @@ def main():
         # OpenAI really needs to let you just make an API call with a URL
         download_audio(video_url, output_file)
 
-        # Split audio into chunks
+        # # Split audio into chunks
         chunks = split_audio(output_file)
 
-        # Transcribe audio chunks
+        # # Transcribe audio chunks
         transcript = transcribe_audio_chunks(chunks)
-
-        # Save transcript
-        transcript_file = "transcript.txt"
+        print(transcript)
+        # # Save transcript
+        transcript_file = "transcript-twist.txt"
         save_transcript(transcript, transcript_file)
+
+
+        if DEBUG:
+            with open(transcript_file, 'r') as file_object:
+                # Do something with the file
+                transcript = file_object.read()
+
+        # Determine if there are any ads
+        determine_ads(transcript)
 
         print(f"\n\nTranscript saved to {transcript_file}")
     except Exception as e:
