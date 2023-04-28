@@ -58,21 +58,21 @@ def transcribe_audio_chunks(chunks):
         print(f"Transcribing: {temp_filename}...")
         start_time = time.time()
         model = whisper.load_model("medium")
-        result = model.transcribe(temp_filename) # openai.Audio.transcribe("whisper-1", open(temp_filename, "rb"))
-        print("result", result)
-        transcript_segments = []
-        for seg in result['segments']:
-            ts = np.round(seg['start'], 1)
-            transcript_segments.append(f"&t={ts}s\t{ts}\t{seg['text']}")
+        result = openai.Audio.transcribe("whisper-1", open(temp_filename, "rb"))
 
-        transcripts.append("\n".join(transcript_segments))
+        transcript_segments = []
+        # for seg in result['segments']:
+        #     ts = np.round(seg['start'], 1)
+        #     transcript_segments.append(f"&t={ts}s\t{ts}\t{seg['text']}")
+
+        transcripts.append(result["text"])# ("\n".join(transcript_segments))
         end_time = time.time()
         time_diff = end_time - start_time
 
         os.remove(temp_filename)  # Remove the temporary chunk file
 
         print(f"Chunk {i} transcribed. Time taken: {time_diff:.2f} seconds")
-
+    print(transcripts)
     return "\n".join(transcripts)
 
 
@@ -105,6 +105,9 @@ def save_transcript(transcript, file_path):
     with open(file_path, "w") as f:
         f.write(transcript)
 
+def determine_ads():
+    
+
 # Delete the audio files
 def cleanup():
     for file in os.listdir():
@@ -134,7 +137,7 @@ def main():
 
         # Transcribe audio chunks
         transcript = transcribe_audio_chunks(chunks)
-
+        print(transcript)
         # Save transcript
         transcript_file = "transcript.txt"
         save_transcript(transcript, transcript_file)
