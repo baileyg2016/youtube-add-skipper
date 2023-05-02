@@ -1,6 +1,7 @@
 import argparse
 import logging
 
+from langchain import LLMChain
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -35,20 +36,27 @@ def determine_ads(transcript):
         Transcript: {transcript}
         AI:"""
     )
-    split = 10 # TODO: need to make this dynamic
+    split = 20 # TODO: need to make this dynamic
     part_length = len(transcript) // split
     
-    prompts = [prompt[i * part_length:(i + 1) * part_length] for i in range(split)]
+    prompts = [transcript[i * part_length:(i + 1) * part_length] for i in range(split)]
     # model = openai.ChatCompletion.create(model="gpt-3.5-turbo")
     llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
-    responses = []
-    for prompt in prompts:
-        r = llm
-        print("resp:", r)
-        responses.append(r)
+    chain = LLMChain(
+        llm=llm,
+        prompt=prompt
+    )
 
-    print('here is the response')
-    print(responses)
+    if DEBUG:
+        for p in prompts:
+            print("prompt:", len(p))
+
+    responses = []
+    for p in prompts:
+        r = chain.run([p])
+        responses.append(r)
+    
+    print(f"Responses: {responses}")
 
 def main():
     # Set up logger
@@ -72,9 +80,7 @@ def main():
         # print(f"\n\nTranscript saved to {transcript_file}")
     except Exception as e:
         print(f"Error: {e}")
-    finally:
-        # Delete the audio files no matter what
-        cleanup()
+        print(e.with_traceback())
         
 
 
