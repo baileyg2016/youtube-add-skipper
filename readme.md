@@ -5,7 +5,7 @@ okay plan, need to use download transcript with youtube-dl and transcribe with w
 example execution:
 ```python engine.py https://www.youtube.com/watch\?v\=Q_1Bco0AkcM```
 
-no ads: https://www.youtube.com/watch?v=Q_1Bco0AkcM
-ads: https://www.youtube.com/watch?v=xZDqVubBZZg&t=2392s&ab_channel=ThisWeekinStartups
+no ads: ```python engin.py https://www.youtube.com/watch?v=Q_1Bco0AkcM```
+ads: ```python engine.py https://www.youtube.com/watch?v=xZDqVubBZZg&t=2392s&ab_channel=ThisWeekinStartups```
 
 note to bailey: use chess env

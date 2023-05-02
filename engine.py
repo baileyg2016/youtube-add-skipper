@@ -26,7 +26,7 @@ def get_only_transcript(transcript):
     return combined_text
 
 def determine_ads(transcript):
-    
+    # init chain
     prompt = PromptTemplate(
         input_variables=["transcript"],
         template="""
@@ -36,16 +36,16 @@ def determine_ads(transcript):
         Transcript: {transcript}
         AI:"""
     )
-    split = 20 # TODO: need to make this dynamic
-    part_length = len(transcript) // split
-    
-    prompts = [transcript[i * part_length:(i + 1) * part_length] for i in range(split)]
-    # model = openai.ChatCompletion.create(model="gpt-3.5-turbo")
     llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
     chain = LLMChain(
         llm=llm,
         prompt=prompt
     )
+
+    # split transcript into parts
+    split = 20 # TODO: need to make this dynamic
+    part_length = len(transcript) // split
+    prompts = [transcript[i * part_length:(i + 1) * part_length] for i in range(split)]
 
     if DEBUG:
         for p in prompts:
@@ -69,7 +69,7 @@ def main():
     args = parser.parse_args()
 
     video_url = args.video_url
-    output_file = "output_audio.mp3" # args.output_file if args.output_file.endswith(".mp3") else f"{args.output_file}.mp3"
+
     try:
         data = download_transcript(video_url)
         transcript = get_only_transcript(data)
