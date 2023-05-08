@@ -1,0 +1,21 @@
+{
+  "name": "skipper",
+  "version": "1.0.0",
+  "description": "Outputs the current timestamp of a playing YouTube video in real time.",
+  "main": "index.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "argparse": "^2.0.1",
+    "langchain": "^0.0.72"
+  },
+  "devDependencies": {
+    "@types/argparse": "^2.0.0",
+    "@types/node": "^16.11.7",
+    "typescript": "^5.0.4"
+  },
+  "author": "Bailey Spell",
+  "license": "ISC"
+}

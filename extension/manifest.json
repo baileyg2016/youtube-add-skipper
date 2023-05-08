@@ -1,0 +1,27 @@
+{
+    "manifest_version": 3,
+    "name": "YouTube Timestamp",
+    "version": "1.0",
+    "description": "Outputs the current timestamp of a playing YouTube video in real time.",
+    "permissions": ["tabs", "activeTab"],
+    "action": {
+      "default_popup": "popup.html",
+      "default_icon": {
+        "16": "assets/icon16.png",
+        "48": "assets/icon48.png",
+        "128": "assets/icon128.png"
+      }
+    },
+    "icons": {
+      "16": "assets/icon16.png",
+      "48": "assets/icon48.png",
+      "128": "assets/icon128.png"
+    },
+    "content_scripts": [
+      {
+        "matches": ["https://www.youtube.com/watch*"],
+        "js": ["contentScript.js"]
+      }
+    ]
+  }
+  

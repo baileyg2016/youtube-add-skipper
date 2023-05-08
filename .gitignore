@@ -1,3 +1,5 @@
 *.txt
 *.log
 *.mp3
+**/.env
+**/node_modules/
