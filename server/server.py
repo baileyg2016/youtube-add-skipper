@@ -13,6 +13,7 @@ def receive_data():
         print(f"Received YouTube URL: {youtube_url}")
         engine = AdsEngine(youtube_url)
         ads = engine()
+        print('returning')
         return jsonify({'success': True, 'ads': ads})
     else:
         return jsonify({'success': False, 'error': 'YouTube URL not found in the request data'}), 400

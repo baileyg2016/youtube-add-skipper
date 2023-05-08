@@ -1,5 +1,6 @@
 import ast
 import logging
+import re
 import os
 
 from langchain import LLMChain
@@ -10,6 +11,9 @@ from dotenv import load_dotenv
 
 DEBUG = False
 load_dotenv()
+
+def log(*args):
+    DEBUG and print(*args)
 
 class AdsEngine:
     def __init__(self, url):
@@ -28,8 +32,7 @@ class AdsEngine:
             data = self.download_transcript()
             
             transformed_data = self.transform_data(data)
-            DEBUG and print(transformed_data)
-            transcript = self.get_only_transcript(data)
+            log(transformed_data)
 
             # Determine if there are any ads
             return self.determine_ads(transformed_data)
@@ -102,21 +105,16 @@ class AdsEngine:
         part_length = len(transcript) // split
         prompts = [transcript[i * part_length:(i + 1) * part_length] for i in range(split)]
 
-
-        if DEBUG:
-            for p in prompts:
-                print("prompt:", len(p))
-
         responses = []
         for p in prompts:
-            r = chain.run([p])
-            print('r==>', r)
-            if 'None' in r or r == 'None':
+            resp = chain.run([p])
+            log(f'r==> {resp}')
+            if 'None' in resp or resp == 'None':
                 continue
-
-            data = ast.literal_eval(r)
-            print('type', type(data))
-            if r != 'None':
-                responses.append({'start': data[0]['start'], 'end': data[-1]['end']})
+        
+            trim = re.search(r'\[(.*)\]', resp)
+            data = ast.literal_eval(trim.group(0))
+            log('type', type(data))
+            responses.append({'start': data[0]['start'], 'end': data[-1]['end']})
 
         return responses
