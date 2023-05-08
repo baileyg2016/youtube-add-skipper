@@ -1,3 +1,4 @@
+import ast
 import logging
 import os
 
@@ -15,6 +16,7 @@ class AdsEngine:
         self.url = url
         self.video_id = url.split('watch?v=')[-1]
         self.transcript = None
+        self.split = 20 # TODO: make this dynamic
 
     def __call__(self):
         # Set up logger
@@ -24,10 +26,13 @@ class AdsEngine:
 
         try:
             data = self.download_transcript()
+            
+            transformed_data = self.transform_data(data)
+            DEBUG and print(transformed_data)
             transcript = self.get_only_transcript(data)
 
             # Determine if there are any ads
-            return self.determine_ads(transcript)
+            return self.determine_ads(transformed_data)
 
             # print(f"\n\nTranscript saved to {transcript_file}")
         except Exception as e:
@@ -49,14 +54,39 @@ class AdsEngine:
             combined_text += item['text'] + ' '
 
         return combined_text
+    
+    def transform_data(self, data):
+        transformed_data = []
+        for item in data:
+            transformed_data.append({
+                'text': item['text'],
+                'start': item['start'],
+                'duration': item['duration'],
+                'end': item['start'] + item['duration']
+            })
+
+        return transformed_data
 
     def determine_ads(self, transcript):
         # init chain
-        prompt = PromptTemplate(
+        yes_or_no = PromptTemplate(
             input_variables=["transcript"],
             template="""
             I am going to give you a transcript of a youtube video and I want you to tell me if there are any ads in it.
             You will only respond with 'Yes' or 'No'. Nothing else.
+
+            Transcript: {transcript}
+            AI:"""
+        )
+
+
+        prompt = PromptTemplate(
+            input_variables=["transcript"],
+            template="""
+            I am going to give you an array of json objects. This objects will include a start time, end time, and duration.
+            You will need to determine if there is an ad in the video.
+            Return to me an array of objects with each object including the start and end time for each add. Do not add a note.
+            If there are no ads, only return "None". Nothing else.
 
             Transcript: {transcript}
             AI:"""
@@ -71,7 +101,7 @@ class AdsEngine:
         split = 20 # TODO: need to make this dynamic
         part_length = len(transcript) // split
         prompts = [transcript[i * part_length:(i + 1) * part_length] for i in range(split)]
-        
+
 
         if DEBUG:
             for p in prompts:
@@ -80,7 +110,13 @@ class AdsEngine:
         responses = []
         for p in prompts:
             r = chain.run([p])
-            responses.append(r)
-        
-        print(f"Responses: {responses}")
+            print('r==>', r)
+            if 'None' in r or r == 'None':
+                continue
+
+            data = ast.literal_eval(r)
+            print('type', type(data))
+            if r != 'None':
+                responses.append({'start': data[0]['start'], 'end': data[-1]['end']})
+
         return responses
