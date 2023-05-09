@@ -33,7 +33,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
 });
 
-// document.addEventListener('DOMContentLoaded', () => {
+(function() {
     console.log('making post request');
     postData('http://localhost:8080/', { youtube_url: window.location.href })
       .then((response) => {
@@ -54,9 +54,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       .catch((error) => {
         console.error('Error sending data:', error);
       });
-// });
+})();
 
 function checkToSkipAd() {
+    console.log('Checking to skip ad');
+    console.log(ads);
     if (ads.length !== 0) {
         const video = document.querySelector('video');
         ads.forEach((ad) => {

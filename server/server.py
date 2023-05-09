@@ -3,7 +3,7 @@ from flask_cors import CORS
 from engine import AdsEngine
 
 app = Flask(__name__)
-CORS(app, origins=['chrome-extension://*'])
+CORS(app, origins=['https://www.youtube.com'])
 
 @app.route('/', methods=['POST'])
 def receive_data():
