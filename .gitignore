@@ -3,3 +3,4 @@
 *.mp3
 **/.env
 **/node_modules/
+**/__pycache__/
